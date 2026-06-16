@@ -28,9 +28,11 @@ class DataVolleyParser:
     def parse_date(self) -> datetime.date:
         for row in self.rows:
             if row.startswith("Date "):
-                match = re.search(r"\b\d{2}/\d{2}/\d{4}\b", row)
+                match = re.search(r"\b\d{2}[/-]\d{2}[/-]\d{4}\b", row)
                 if match:
-                    return datetime.strptime(match.group(), "%d/%m/%Y").date()
+                    date_str = match.group().replace("-", "/")
+                    return datetime.strptime(date_str, "%d/%m/%Y").date()
+
         return None
 
     def parse_teams(self) -> tuple:
