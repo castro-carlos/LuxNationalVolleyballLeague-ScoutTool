@@ -53,16 +53,34 @@ class DataVolleyParser:
         except ValueError:
             return 0
 
-    def parse_season(self):
-        return "2025/2026"
+    def derive_season(self, match_date) -> str:
+        """
+        Derives the season string (YYYY/YYYY) programmatically from the match date,
+        bypassing human typos in the PDF header text.
+        """
+        if not match_date:
+            return "Unknown Season"
 
-    def extract_player_jersey_data(self, player_row):
+        year = match_date.year
+        month = match_date.month
+
+        # Volleyball seasons typically start around September (Month 9)
+        if month >= 9:
+            start_year = year
+            end_year = year + 1
+        else:
+            start_year = year - 1
+            end_year = year
+
+        return f"{start_year}/{end_year}"
+
+    def extract_player_jersey_data(self, player_row) -> int:
         tokens = player_row.strip().split()
         if not tokens:
             return None
         return int(tokens[0])
 
-    def extract_player_name_data(self, player_row):
+    def extract_player_name_data(self, player_row) -> str:
         tokens = player_row.strip().split()
         if not tokens:
             return None
@@ -104,7 +122,7 @@ class DataVolleyParser:
     
         return (total_receptions, reception_errors)
 
-    def extract_player_libero_data(self, player_row):
+    def extract_player_libero_data(self, player_row) -> bool:
         tokens = player_row.strip().split()
         if len(tokens) < 2:
             return False
@@ -156,11 +174,13 @@ class DataVolleyParser:
         home_players = self.parse_players(home)
         away_players = self.parse_players(away)
         all_players = home_players + away_players
+        match_date = self.parse_date()
+        season_string = self.derive_season(match_date)
 
         return MatchReport(
             file_name=self.file_path,
-            match_date=self.parse_date(),
-            season = self.parse_season(),
+            match_date=match_date,
+            season = season_string,
             home_team=home,
             away_team=away,
             players=all_players
