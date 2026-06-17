@@ -12,7 +12,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the router
 app.include_router(teams_router)
 
 @app.get("/")
