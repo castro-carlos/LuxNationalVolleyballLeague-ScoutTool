@@ -2,13 +2,14 @@
 import glob
 import os
 import logging
-from dotenv import load_dotenv
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
-# Import the models and connection string from your setup script
-from setup_db import DB_CONN_STRING, Team, Match, PlayerMatchStat
-from report_parser import DataVolleyParser
+from db.database import engine
+
+from db.models import Team, Match, PlayerMatchStat
+
+from parser.report_parser import DataVolleyParser
 
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(
@@ -16,7 +17,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
-        logging.FileHandler("../parser_errors.log", mode="a", encoding="utf-8"),
+        logging.FileHandler("parser_errors.log", mode="a", encoding="utf-8"),
         logging.StreamHandler()
     ]
 )
@@ -26,16 +27,12 @@ def get_or_create_team(session, team_name: str) -> Team:
     Looks up a team by name using SQLAlchemy ORM.
     Returns the Team object. If it doesn't exist, creates and flushes it.
     """
-    # Modern SQLAlchemy 2.0 select statement
     stmt = select(Team).where(Team.team_name == team_name)
     team = session.scalars(stmt).first()
 
     if not team:
-        # Create a new Team instance if not found
         team = Team(team_name=team_name)
         session.add(team)
-        # Flush sends the insert to Postgres immediately so it generates an ID,
-        # but keeps it inside the active transaction without a permanent commit yet.
         session.flush()
 
     return team
@@ -45,10 +42,7 @@ def main():
     saved_files = glob.glob("match_reports/match_*.pdf")
     logging.info(f"Beginning database ingestion on {len(saved_files)} files...")
 
-    # Create the SQLAlchemy Engine
-    engine = create_engine(DB_CONN_STRING, echo=False)
-
-    # Health Check: Safely verify connection to the database container
+    # Health Check: Safely verify connection to the database container using the imported engine
     try:
         with engine.connect() as conn:
             pass
@@ -56,7 +50,7 @@ def main():
         logging.critical("Cannot connect to PostgreSQL via SQLAlchemy. Did you run setup_db.py?")
         return
 
-    # Create a configured Session class to manage transactions
+    # Create a configured Session class tied to our global engine
     Session = sessionmaker(bind=engine)
 
     # Open a single persistent session context for the processing loop
@@ -69,7 +63,7 @@ def main():
                 parser = DataVolleyParser(file_path)
                 report = parser.build_report()
 
-                # STEP 1: Handle skipping logic (Equivalent to ON CONFLICT DO NOTHING)
+                # STEP 1: Handle skipping logic
                 stmt = select(Match).where(Match.file_origin == report.file_name)
                 existing_match = session.scalars(stmt).first()
 
@@ -90,7 +84,7 @@ def main():
                     away_team_id=away_team.id
                 )
                 session.add(new_match)
-                session.flush() # Populates new_match.id for the relationship mapping below
+                session.flush()
 
                 # STEP 4: Instantiate and associate Player stats
                 for player in report.players:
@@ -107,12 +101,11 @@ def main():
                     )
                     session.add(new_stat)
 
-                # Commit all staged changes (Teams, Match, and Stats) specifically for this PDF file
+                # Commit all staged changes specifically for this PDF file
                 session.commit()
                 logging.info(f"Successfully ingested match metadata and {len(report.players)} player records from {file_name}.")
 
             except Exception as e:
-                # If a single file errors out, rollback clears the uncommitted flushes for this file
                 session.rollback()
                 logging.error(f"CRASH OCCURRED while processing {file_name}. Rolling back transaction.", exc_info=True)
 

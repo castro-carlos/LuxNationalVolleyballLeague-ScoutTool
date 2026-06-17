@@ -5,9 +5,9 @@ from sqlalchemy.orm import Session
 from typing import List
 
 # Clean downstream imports—no looking back at main!
-from setup_db import Team
-from database import get_db
-from schemas import TeamResponse
+from db.models import Team
+from db.database import get_db
+from schemas.teams import TeamResponse
 
 router = APIRouter(
     prefix="/teams",

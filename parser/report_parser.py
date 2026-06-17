@@ -2,7 +2,7 @@ import re
 import pymupdf
 from collections import defaultdict
 from datetime import datetime
-from dtos import MatchReport, PlayerMatchStats
+from parser.dtos import MatchReport, PlayerMatchStats
 from typing import List
 
 
