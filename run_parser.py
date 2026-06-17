@@ -3,19 +3,12 @@ import glob
 import os
 import logging
 from dotenv import load_dotenv
-import psycopg
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import sessionmaker
+
+# Import the models and connection string from your setup script
+from setup_db import DB_CONN_STRING, Team, Match, PlayerMatchStat
 from report_parser import DataVolleyParser
-
-# Load credentials from .env file
-load_dotenv()
-
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-
-DB_CONN_STRING = f"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST} port={DB_PORT}"
 
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(
@@ -28,93 +21,100 @@ logging.basicConfig(
     ]
 )
 
-def get_or_create_team(cur, team_name: str) -> int:
+def get_or_create_team(session, team_name: str) -> Team:
     """
-    Looks up a team by name. Returns its ID.
-    If the team doesn't exist, inserts it and returns the newly generated ID.
+    Looks up a team by name using SQLAlchemy ORM.
+    Returns the Team object. If it doesn't exist, creates and flushes it.
     """
-    # 1. Check if the team already exists
-    cur.execute("SELECT id FROM teams WHERE team_name = %s;", (team_name,))
-    result = cur.fetchone()
-    if result:
-        return result[0]
+    # Modern SQLAlchemy 2.0 select statement
+    stmt = select(Team).where(Team.team_name == team_name)
+    team = session.scalars(stmt).first()
 
-    # 2. If it doesn't exist, insert it and get the identity ID back
-    cur.execute("INSERT INTO teams (team_name) VALUES (%s) RETURNING id;", (team_name,))
-    return cur.fetchone()[0]
+    if not team:
+        # Create a new Team instance if not found
+        team = Team(team_name=team_name)
+        session.add(team)
+        # Flush sends the insert to Postgres immediately so it generates an ID,
+        # but keeps it inside the active transaction without a permanent commit yet.
+        session.flush()
+
+    return team
 
 
 def main():
     saved_files = glob.glob("match_reports/match_*.pdf")
     logging.info(f"Beginning database ingestion on {len(saved_files)} files...")
 
-    # Health Check: Validate database connection before starting heavy parsing
+    # Create the SQLAlchemy Engine
+    engine = create_engine(DB_CONN_STRING, echo=False)
+
+    # Health Check: Safely verify connection to the database container
     try:
-        with psycopg.connect(DB_CONN_STRING) as conn:
+        with engine.connect() as conn:
             pass
-    except psycopg.OperationalError:
-        logging.critical("Cannot connect to PostgreSQL. Did you forget to run setup_db.py?")
+    except Exception:
+        logging.critical("Cannot connect to PostgreSQL via SQLAlchemy. Did you run setup_db.py?")
         return
 
-    # Process files
-    with psycopg.connect(DB_CONN_STRING) as conn:
-        with conn.cursor() as cur:
+    # Create a configured Session class to manage transactions
+    Session = sessionmaker(bind=engine)
 
-            for file_path in saved_files:
-                file_name = os.path.basename(file_path)
-                logging.info(f"Processing: {file_name}")
+    # Open a single persistent session context for the processing loop
+    with Session() as session:
+        for file_path in saved_files:
+            file_name = os.path.basename(file_path)
+            logging.info(f"Processing: {file_name}")
 
-                try:
-                    parser = DataVolleyParser(file_path)
-                    report = parser.build_report()
+            try:
+                parser = DataVolleyParser(file_path)
+                report = parser.build_report()
 
-                    # STEP 1: Resolve Home and Away Team IDs
-                    home_team_id = get_or_create_team(cur, report.home_team)
-                    away_team_id = get_or_create_team(cur, report.away_team)
+                # STEP 1: Handle skipping logic (Equivalent to ON CONFLICT DO NOTHING)
+                stmt = select(Match).where(Match.file_origin == report.file_name)
+                existing_match = session.scalars(stmt).first()
 
-                    # STEP 2: Insert Match metadata using the resolved Team IDs
-                    cur.execute("""
-                        INSERT INTO matches (file_origin, match_date, season, home_team_id, away_team_id)
-                        VALUES (%s, %s, %s, %s, %s)
-                        ON CONFLICT (file_origin) DO NOTHING
-                        RETURNING id;
-                    """, (report.file_name, report.match_date, report.season, home_team_id, away_team_id))
+                if existing_match:
+                    logging.warning(f"Skipped {file_name} (File already exists in database).")
+                    continue
 
-                    match_result = cur.fetchone()
+                # STEP 2: Resolve Home and Away Teams
+                home_team = get_or_create_team(session, report.home_team)
+                away_team = get_or_create_team(session, report.away_team)
 
-                    if match_result is None:
-                        logging.warning(f"Skipped {file_name} (File already exists in database).")
-                        continue
+                # STEP 3: Instantiate Match metadata object
+                new_match = Match(
+                    file_origin=report.file_name,
+                    match_date=report.match_date,
+                    season=report.season,
+                    home_team_id=home_team.id,
+                    away_team_id=away_team.id
+                )
+                session.add(new_match)
+                session.flush() # Populates new_match.id for the relationship mapping below
 
-                    match_id = match_result[0]
+                # STEP 4: Instantiate and associate Player stats
+                for player in report.players:
+                    player_team = get_or_create_team(session, player.team_played_for)
 
-                    # STEP 3: Insert Players
-                    for player in report.players:
-                        # Resolve the ID for the team the player was representing in this specific match
-                        player_team_id = get_or_create_team(cur, player.team_played_for)
+                    new_stat = PlayerMatchStat(
+                        match_id=new_match.id,
+                        jersey=player.jersey,
+                        player_name=player.name,
+                        team_played_for_id=player_team.id,
+                        is_libero=player.is_libero,
+                        total_receptions=player.total_receptions,
+                        reception_errors=player.reception_errors
+                    )
+                    session.add(new_stat)
 
-                        cur.execute("""
-                            INSERT INTO player_match_stats 
-                            (match_id, jersey, player_name, team_played_for_id, is_libero, total_receptions, reception_errors)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s);
-                        """, (
-                            match_id,
-                            player.jersey,
-                            player.name,
-                            player_team_id,
-                            player.is_libero,
-                            player.total_receptions,
-                            player.reception_errors
-                        ))
+                # Commit all staged changes (Teams, Match, and Stats) specifically for this PDF file
+                session.commit()
+                logging.info(f"Successfully ingested match metadata and {len(report.players)} player records from {file_name}.")
 
-                    # Safely commit all changes for this single PDF match report
-                    conn.commit()
-                    logging.info(f"Successfully ingested match metadata and {len(report.players)} player records from {file_name}.")
-
-                except Exception as e:
-                    # If anything crashes mid-file, wipe out the temporary inserts for this file
-                    conn.rollback()
-                    logging.error(f"CRASH OCCURRED while processing {file_name}. Rolling back transaction.", exc_info=True)
+            except Exception as e:
+                # If a single file errors out, rollback clears the uncommitted flushes for this file
+                session.rollback()
+                logging.error(f"CRASH OCCURRED while processing {file_name}. Rolling back transaction.", exc_info=True)
 
     logging.info("Database ingestion pipeline complete.")
 

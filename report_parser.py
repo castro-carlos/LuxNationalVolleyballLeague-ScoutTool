@@ -5,14 +5,23 @@ from datetime import datetime
 from models import MatchReport, PlayerMatchStats
 from typing import List
 
+
+class CoordinatedString(str):
+    def __new__(cls, value, words):
+        obj = super().__new__(cls, value)
+        obj.words = words  # Holds the sorted list of (x0, text) tuples
+        return obj
+
+
 class DataVolleyParser:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.doc = pymupdf.open(file_path)
         self.rows = self._extract_rows(self.doc[0])
 
+
+
     def _extract_rows(self, page) -> list:
-        # Your original PDF word placement rebuilt here
         words = page.get_text("words")
         rows = defaultdict(list)
         for x0, y0, x1, y1, text, block, line, word in words:
@@ -21,8 +30,12 @@ class DataVolleyParser:
 
         rebuilt_rows = []
         for y in sorted(rows):
-            row = " ".join(text for x, text in sorted(rows[y]))
-            rebuilt_rows.append(row.strip())
+            # Sort the tokens horizontally from left to right
+            sorted_words = sorted(rows[y], key=lambda item: item[0])
+            row_text = " ".join(text for x, text in sorted_words).strip()
+
+            # Wrap the string in our custom class to preserve the coordinates
+            rebuilt_rows.append(CoordinatedString(row_text, sorted_words))
         return rebuilt_rows
 
     def parse_date(self) -> datetime.date:
@@ -102,26 +115,26 @@ class DataVolleyParser:
         return player_name
 
     def extract_player_reception_data(self, player_row):
-        tokens = player_row.strip().split()
-        if not tokens:
-            return None
-        # 1. Use your name logic to find out where the player prefix ends
-        is_libero = self.extract_player_libero_data(player_row)
-        start_idx = 2 if is_libero else 1
-    
-        name_tokens_count = 0
-        for token in tokens[start_idx:]:
-            # Stop counting when we hit a stat placeholder (.) or any number/symbol
-            if token == '.' or any(char.isdigit() for char in token) or token in ['(', ')']:
-                break
-            name_tokens_count += 1
-    
-        prefix_length = start_idx + name_tokens_count
-        stat_tokens = tokens[prefix_length:]
-    
-        total_receptions = self.clean_stat(stat_tokens[7])
-        reception_errors = self.clean_stat(stat_tokens[8])
-    
+        """
+        Extracts stats by looking inside specific horizontal coordinate windows,
+        making it immune to shifting array indices.
+        """
+        # Retrieve the spatial word map from our custom string object
+        words = getattr(player_row, "words", [])
+
+        total_receptions_text = "."
+        reception_errors_text = "."
+
+        for x0, text in words:
+            if 361.0 <= x0 <= 368.0:
+                total_receptions_text = text
+
+            elif 380.0 <= x0 <= 395.0:
+                reception_errors_text = text
+
+        total_receptions = self.clean_stat(total_receptions_text)
+        reception_errors = self.clean_stat(reception_errors_text)
+
         return (total_receptions, reception_errors)
 
     def extract_player_libero_data(self, player_row) -> bool:
