@@ -9,7 +9,7 @@ from db.database import engine
 
 from db.models import Team, Match, PlayerMatchStat
 
-from parser.report_parser import DataVolleyParser
+from pdf_parser.report_parser import DataVolleyParser
 
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(

@@ -1,16 +1,10 @@
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 
-class TeamPlayerErrorRank(BaseModel):
+class PlayerReceptionErrorReport(BaseModel):
     player_name: str
     total_receptions: int
     reception_errors: int
-
-    @computed_field
-    def error_percentage(self) -> float:
-        if self.total_receptions == 0:
-            return 0.0
-        # Calculate percentage and round to 1 decimal place
-        return round((self.reception_errors / self.total_receptions) * 100, 2)
+    error_percentage: float
 
     class Config:
         from_attributes = True
