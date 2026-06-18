@@ -26,7 +26,8 @@ def get_all_teams(db: Session = Depends(get_db)):
 @router.get("/teams/{team_id}/reception-scout", response_model=List[PlayerReceptionErrorReport], tags=["Scouting & Analytics"])
 def get_team_reception_error_scout_report(
         team_id: int,
-        season: str = Query(..., description="Season format: YYYY/YYYY"),
+        season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),
+        min_receptions: int = Query(10, description="Minimum total receptions required to be listed"),
         db: Session = Depends(get_db)
 ):
     # 1. Verify that the target team exists
@@ -85,6 +86,7 @@ def get_team_reception_error_scout_report(
             PlayerMatchStat.player_name.in_(select(current_team_players_subq))
         )
         .group_by(PlayerMatchStat.player_name)
+        .having(func.sum(PlayerMatchStat.total_receptions) >= min_receptions)
         .order_by(desc("error_percentage")) # Ascending order: Best performance up top
     )
 
