@@ -1,6 +1,7 @@
 from schemas.teams import TeamResponse
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, case, Float
 from sqlalchemy.orm import Session
 from typing import List
@@ -15,23 +16,25 @@ router = APIRouter(
 )
 
 @router.get("", response_model=List[TeamResponse], tags=["Teams Management"])
-def get_all_teams(db: Session = Depends(get_db)):
+async def get_all_teams(db: AsyncSession = Depends(get_db)):
     try:
         stmt = select(Team).order_by(Team.team_name)
-        return db.scalars(stmt).all()
+
+        result = await db.scalars(stmt)
+        return result.all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/teams/{team_id}/reception-scout", response_model=List[PlayerReceptionErrorReport], tags=["Scouting & Analytics"])
-def get_team_reception_error_scout_report(
+async def get_team_reception_error_scout_report(
         team_id: int,
         season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),
         min_receptions: int = Query(10, description="Minimum total receptions required to be listed"),
-        db: Session = Depends(get_db)
+        db: AsyncSession = Depends(get_db)
 ):
     # 1. Verify that the target team exists
-    team = db.scalar(select(Team).where(Team.id == team_id))
+    team = await db.scalar(select(Team).where(Team.id == team_id))
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 
@@ -90,6 +93,7 @@ def get_team_reception_error_scout_report(
         .order_by(desc("error_percentage")) # Ascending order: Best performance up top
     )
 
-    # 5. Execute transaction and return the dataset mappings
-    results = db.execute(stats_stmt).mappings().all()
+    raw_results = await db.execute(stats_stmt)
+
+    results = raw_results.mappings().all()
     return results

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from db.database import engine
 from db.models import Base
@@ -14,13 +15,14 @@ logging.basicConfig(
 )
 
 # --- DATABASE INITIALIZATION TARGET ---
-def initialize_database():
+async def initialize_database():
     logging.info("Connecting to PostgreSQL via SQLAlchemy to initialize schema...")
     try:
-        Base.metadata.create_all(engine)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
         logging.info("Database tables initialized successfully via SQLAlchemy!")
     except Exception as e:
         logging.critical("FAILED to initialize database tables.", exc_info=True)
 
 if __name__ == "__main__":
-    initialize_database()
+    asyncio.run(initialize_database())
