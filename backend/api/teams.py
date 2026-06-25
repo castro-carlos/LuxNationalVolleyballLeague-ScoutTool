@@ -26,7 +26,7 @@ async def get_all_teams(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/teams/{team_id}/reception-scout", response_model=List[PlayerReceptionErrorReport], tags=["Scouting & Analytics"])
+@router.get("/{team_id}/reception-scout", response_model=List[PlayerReceptionErrorReport], tags=["Scouting & Analytics"])
 async def get_team_reception_error_scout_report(
         team_id: int,
         season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),
@@ -86,11 +86,11 @@ async def get_team_reception_error_scout_report(
         .join(Match, PlayerMatchStat.match_id == Match.id)
         .where(
             Match.season == season,
-            PlayerMatchStat.player_name.in_(select(current_team_players_subq))
+            PlayerMatchStat.player_name.in_(current_team_players_subq.select())
         )
         .group_by(PlayerMatchStat.player_name)
         .having(func.sum(PlayerMatchStat.total_receptions) >= min_receptions)
-        .order_by(desc("error_percentage")) # Ascending order: Best performance up top
+        .order_by(desc("error_percentage")) # Descending order: worst performance up top
     )
 
     raw_results = await db.execute(stats_stmt)
