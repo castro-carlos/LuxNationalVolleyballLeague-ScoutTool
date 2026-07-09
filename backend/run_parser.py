@@ -96,7 +96,9 @@ async def main():
                         team_played_for_id=player_team.id,
                         is_libero=player.is_libero,
                         total_receptions=player.total_receptions,
-                        reception_errors=player.reception_errors
+                        reception_errors=player.reception_errors,
+                        positive_receptions=player.positive_receptions,
+                        excellent_receptions=player.excellent_receptions
                     )
                     session.add(new_stat)
 

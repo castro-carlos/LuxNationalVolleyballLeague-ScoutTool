@@ -12,6 +12,8 @@ class PlayerMatchStats:
     is_libero: bool = False
     total_receptions: int = 0
     reception_errors: int = 0
+    positive_receptions: int = 0
+    excellent_receptions: int = 0
 
 
 
