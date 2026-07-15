@@ -3,3 +3,5 @@ backend/volleyball_master_stats.csv
 .env
 *.log
 BroadSteps.md
+backend/reset_db.py
+backend/verify_ingestion.py
