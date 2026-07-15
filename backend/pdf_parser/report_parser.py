@@ -2,6 +2,11 @@ import re
 import pymupdf
 from collections import defaultdict
 from datetime import datetime
+from backend.pdf_parser.extractors.point import PointsExtractor
+from backend.pdf_parser.extractors.block import BlockExtractor
+from backend.pdf_parser.extractors.reception import ReceptionExtractor
+from backend.pdf_parser.extractors.service import ServiceExtractor
+from backend.pdf_parser.extractors.attack import AttackExtractor
 from backend.pdf_parser.dtos import MatchReport, PlayerMatchStats
 from typing import List
 
@@ -14,13 +19,6 @@ class CoordinatedString(str):
 
 
 class DataVolleyParser:
-
-    RECEPTION_WINDOWS = {
-        "total":     (360.0, 375.0), # Traps x0: 365.8
-        "errors":    (376.0, 395.0), # Traps x0: 385.9
-        "positive":  (396.0, 420.0), # Traps x0: 403.5
-        "excellent": (421.0, 450.0)  # Traps x0: 426.8 and 431.5
-    }
 
     def __init__(self, file_path: str):
         self.file_path = file_path
@@ -121,53 +119,6 @@ class DataVolleyParser:
         player_name = " ".join(name_tokens)
         return player_name
 
-    def extract_player_reception_data(self, player_row):
-        """
-        Extracts reception statistics from a single row using precise horizontal windows,
-        and derives raw integer counts from percentages.
-        """
-        words = getattr(player_row, "words", [])
-
-        total_receptions_text = "."
-        reception_errors_text = "."
-        pos_percent_text = "."
-        exc_percent_text = ""
-
-        # Unpack window limits
-        tot_min, tot_max = self.RECEPTION_WINDOWS["total"]
-        err_min, err_max = self.RECEPTION_WINDOWS["errors"]
-        pos_min, pos_max = self.RECEPTION_WINDOWS["positive"]
-        exc_min, exc_max = self.RECEPTION_WINDOWS["excellent"]
-
-        for x0, text in words:
-            if tot_min <= x0 <= tot_max:
-                total_receptions_text = text
-            elif err_min <= x0 <= err_max:
-                reception_errors_text = text
-            elif pos_min <= x0 <= pos_max and "%" in text:
-                pos_percent_text = text
-            elif exc_min <= x0 <= exc_max:
-                # Strips away the characters '(' and ')' if they appear as separate tokens
-                cleaned_token = text.replace("(", "").replace(")", "").strip()
-                if cleaned_token:
-                    exc_percent_text = cleaned_token
-
-        # Clean into base numbers
-        total_receptions = self.clean_stat(total_receptions_text)
-        reception_errors = self.clean_stat(reception_errors_text)
-        pos_percent = self.clean_stat(pos_percent_text)
-        exc_percent = self.clean_stat(exc_percent_text)
-
-        # Mathematical back-calculation to get raw counts for seasonal tracking
-        positive_receptions = 0
-        excellent_receptions = 0
-
-        if total_receptions > 0:
-            positive_receptions = round((pos_percent * total_receptions) / 100)
-            excellent_receptions = round((exc_percent * total_receptions) / 100)
-
-        return (total_receptions, reception_errors, positive_receptions, excellent_receptions)
-
     def extract_player_libero_data(self, player_row) -> bool:
         tokens = player_row.strip().split()
         if len(tokens) < 2:
@@ -200,17 +151,44 @@ class DataVolleyParser:
                 player_jersey = self.extract_player_jersey_data(row)
                 player_name = self.extract_player_name_data(row)
                 is_player_libero = self.extract_player_libero_data(row)
-                tot_rec, rec_err, pos_rec, exc_rec = self.extract_player_reception_data(row)
+
+                words = getattr(row, "words", [])
+
+                tot_pts, bp_pts, plus_minus = PointsExtractor.extract(words, self.clean_stat)
+
+                tot_rec, rec_err, pos_rec, exc_rec = ReceptionExtractor.extract(words, self.clean_stat)
+
+                tot_srv, srv_err, srv_ace = ServiceExtractor.extract(words, self.clean_stat)
+
+                tot_att, att_err, att_blk, att_kill = AttackExtractor.extract(words, self.clean_stat)
+
+                blk_pts = BlockExtractor.extract(words, self.clean_stat)
 
                 player_objects.append(PlayerMatchStats(
                     jersey=player_jersey,
                     name=player_name,
                     team_played_for=team,
                     is_libero=is_player_libero,
+
+                    points_total=tot_pts,
+                    points_break=bp_pts,
+                    plus_minus=plus_minus,
+
+                    service_total=tot_srv,
+                    service_errors=srv_err,
+                    service_aces=srv_ace,
+
                     total_receptions=tot_rec,
                     reception_errors=rec_err,
                     positive_receptions=pos_rec,
-                    excellent_receptions=exc_rec
+                    excellent_receptions=exc_rec,
+
+                    attack_total=tot_att,
+                    attack_errors=att_err,
+                    attack_blocked=att_blk,
+                    attack_kills=att_kill,
+
+                    block_points=blk_pts
                 ))
 
         return player_objects

@@ -95,10 +95,26 @@ async def main():
                         player_name=player.name,
                         team_played_for_id=player_team.id,
                         is_libero=player.is_libero,
+
+                        points_total=player.points_total,
+                        points_break=player.points_break,
+                        plus_minus=player.plus_minus,
+
+                        service_total=player.service_total,
+                        service_errors=player.service_errors,
+                        service_aces=player.service_aces,
+
                         total_receptions=player.total_receptions,
                         reception_errors=player.reception_errors,
                         positive_receptions=player.positive_receptions,
-                        excellent_receptions=player.excellent_receptions
+                        excellent_receptions=player.excellent_receptions,
+
+                        attack_total=player.attack_total,
+                        attack_errors=player.attack_errors,
+                        attack_blocked=player.attack_blocked,
+                        attack_kills=player.attack_kills,
+
+                        block_points=player.block_points
                     )
                     session.add(new_stat)
 

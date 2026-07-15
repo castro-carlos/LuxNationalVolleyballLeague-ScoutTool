@@ -8,12 +8,27 @@ class PlayerMatchStats:
     jersey: int
     name: str
     team_played_for: str  # e.g., "Volley Bartreng" (captures mid-season transfers cleanly)
-
     is_libero: bool = False
+
+    points_total: int = 0
+    points_break: int = 0
+    plus_minus: int = 0
+
     total_receptions: int = 0
     reception_errors: int = 0
     positive_receptions: int = 0
     excellent_receptions: int = 0
+
+    service_total: int = 0
+    service_errors: int = 0
+    service_aces: int = 0
+
+    attack_total: int = 0
+    attack_errors: int = 0
+    attack_blocked: int = 0
+    attack_kills: int = 0
+
+    block_points: int = 0
 
 
 
