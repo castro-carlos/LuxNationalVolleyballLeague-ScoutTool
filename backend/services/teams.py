@@ -15,3 +15,11 @@ class TeamService:
             raise HTTPException(status_code=404, detail="Team not found")
 
         return await self.repo.get_season_reception_stats(team_id, season, min_receptions)
+
+    async def get_attack_volume_report(self, team_id: int, season: str, min_attacks: int):
+        # Verify team exists
+        team = await self.repo.get_by_id(team_id)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        return await self.repo.get_season_attack_volume_stats(team_id, season, min_attacks)

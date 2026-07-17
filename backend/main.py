@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.teams import router as teams_router
+from backend.api.teams import router as teams_router
+from backend.api.players import router as players_router
 
 app = FastAPI(title="Volleyball Analytics Backend")
 
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(teams_router)
+app.include_router(players_router)
 
 @app.get("/")
 def home():

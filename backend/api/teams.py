@@ -4,6 +4,7 @@ from typing import List
 
 from backend.db.database import get_db
 from backend.schemas.teams import TeamResponse
+from backend.schemas.players import PlayerAttackVolumeReport
 from backend.schemas.players import PlayerReceptionErrorReport
 from backend.repositories.teams import TeamRepository
 from backend.services.teams import TeamService
@@ -30,3 +31,12 @@ async def get_team_reception_error_scout_report(
         service: TeamService = Depends(get_team_service)
 ):
     return await service.get_reception_scout_report(team_id, season, min_receptions)
+
+@router.get("/{team_id}/attack-scout", response_model=List[PlayerAttackVolumeReport], tags=["Scouting & Analytics"])
+async def get_team_attack_volume_scout_report(
+        team_id: int,
+        season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),
+        min_attacks: int = Query(15, description="Minimum total attack attempts required to be listed"),
+        service: TeamService = Depends(get_team_service)
+):
+    return await service.get_attack_volume_report(team_id, season, min_attacks)
