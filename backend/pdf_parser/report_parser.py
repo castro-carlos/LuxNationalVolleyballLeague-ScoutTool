@@ -23,7 +23,9 @@ class DataVolleyParser:
     def __init__(self, file_path: str):
         self.file_path = file_path
         self.doc = pymupdf.open(file_path)
+        self.page = self.doc[0]
         self.rows = self._extract_rows(self.doc[0])
+        self.drawings = self.page.get_drawings()
 
 
     def _extract_rows(self, page) -> list:
@@ -39,8 +41,9 @@ class DataVolleyParser:
             sorted_words = sorted(rows[y], key=lambda item: item[0])
             row_text = " ".join(text for x, text in sorted_words).strip()
 
-            # Wrap the string in our custom class to preserve the coordinates
+            # Wrap the string cleanly in your custom class using the sorted words
             rebuilt_rows.append(CoordinatedString(row_text, sorted_words))
+
         return rebuilt_rows
 
     def parse_date(self) -> datetime.date:

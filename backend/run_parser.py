@@ -89,6 +89,7 @@ async def main():
                 for player in report.players:
                     player_team = await get_or_create_team(session, player.team_played_for)
 
+
                     new_stat = PlayerMatchStat(
                         match_id=new_match.id,
                         jersey=player.jersey,

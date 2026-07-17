@@ -27,8 +27,8 @@ print("=" * 80)
 
 # Loop through all the reconstructed rows to find Steve Weber's data lines
 for idx, row in enumerate(parser.rows):
-    if "WEBER Steve" in row:
-        print(f"\n[FOUND STEVE WEBER AT ROW INDEX {idx}]")
+    if "SCHUBERT Jared" in row:
+        print(f"\n[FOUND SCHUBERT Jared AT ROW INDEX {idx}]")
         print(f"Raw Rebuilt Text: '{row}'")
         print("-" * 50)
 
