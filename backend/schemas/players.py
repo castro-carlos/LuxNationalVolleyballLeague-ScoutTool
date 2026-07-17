@@ -20,3 +20,14 @@ class PlayerAttackVolumeReport(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PlayerServiceVolumeReport(BaseModel):
+    player_name: str
+    total_serves: int
+    aces: int
+    error_serves: int
+    service_efficiency: float
+    service_error_rate: float
+
+    class Config:
+        from_attributes = True
