@@ -1,5 +1,5 @@
-// const API_BASE_URL = "http://localhost:8000";
-const API_BASE_URL = "https://lux-volleyball-backend.onrender.com";
+// const BASE_URL = "http://localhost:8000";
+const BASE_URL = "https://lux-volleyball-backend.onrender.com";
 
 export const fetchTeams = async () => {
     const res = await fetch(`${BASE_URL}/teams`);
