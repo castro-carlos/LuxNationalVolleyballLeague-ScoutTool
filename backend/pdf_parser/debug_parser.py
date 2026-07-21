@@ -11,7 +11,7 @@ PDF_PATH = PROJECT_ROOT / "match_reports" / "match_0a97949f-d713-4e7c-bd6e-9f506
 
 # 3. Add the backend directory to Python's search path so it can find your parser import
 sys.path.append(str(PROJECT_ROOT))
-from backend.pdf_parser.report_parser import DataVolleyParser
+from pdf_parser.report_parser import DataVolleyParser
 
 if not PDF_PATH.exists():
     print(f"❌ Error: Could not find file at: {PDF_PATH}")

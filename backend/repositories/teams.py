@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc, case, Float
-from backend.db.models import Team, Match, PlayerMatchStat
+from db.models import Team, Match, PlayerMatchStat
 
 class TeamRepository:
     def __init__(self, db: AsyncSession):

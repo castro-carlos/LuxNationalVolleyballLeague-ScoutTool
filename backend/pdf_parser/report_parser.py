@@ -2,12 +2,12 @@ import re
 import pymupdf
 from collections import defaultdict
 from datetime import datetime
-from backend.pdf_parser.extractors.point import PointsExtractor
-from backend.pdf_parser.extractors.block import BlockExtractor
-from backend.pdf_parser.extractors.reception import ReceptionExtractor
-from backend.pdf_parser.extractors.service import ServiceExtractor
-from backend.pdf_parser.extractors.attack import AttackExtractor
-from backend.pdf_parser.dtos import MatchReport, PlayerMatchStats
+from pdf_parser.extractors.point import PointsExtractor
+from pdf_parser.extractors.block import BlockExtractor
+from pdf_parser.extractors.reception import ReceptionExtractor
+from pdf_parser.extractors.service import ServiceExtractor
+from pdf_parser.extractors.attack import AttackExtractor
+from pdf_parser.dtos import MatchReport, PlayerMatchStats
 from typing import List
 
 

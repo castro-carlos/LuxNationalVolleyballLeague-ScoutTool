@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from backend.db.database import get_db
-from backend.schemas.teams import TeamResponse
-from backend.schemas.players import PlayerAttackVolumeReport, PlayerServiceVolumeReport
-from backend.schemas.players import PlayerReceptionErrorReport
-from backend.repositories.teams import TeamRepository
-from backend.services.teams import TeamService
+from db.database import get_db
+from schemas.teams import TeamResponse
+from schemas.players import PlayerAttackVolumeReport, PlayerServiceVolumeReport
+from schemas.players import PlayerReceptionErrorReport
+from repositories.teams import TeamRepository
+from services.teams import TeamService
 
 router = APIRouter(
     prefix="/teams",

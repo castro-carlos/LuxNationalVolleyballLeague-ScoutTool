@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from backend.repositories.teams import TeamRepository
+from repositories.teams import TeamRepository
 
 class TeamService:
     def __init__(self, repo: TeamRepository):

@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from backend.repositories.players import PlayerRepository
+from repositories.players import PlayerRepository
 
 class PlayerService:
     def __init__(self, repo: PlayerRepository):

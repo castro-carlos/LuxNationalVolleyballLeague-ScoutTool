@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api.teams import router as teams_router
-from backend.api.players import router as players_router
+from api.teams import router as teams_router
+from api.players import router as players_router
+
 
 app = FastAPI(title="Volleyball Analytics Backend")
 
@@ -25,3 +26,4 @@ app.include_router(players_router)
 @app.get("/")
 def home():
     return {"status": "Online"}
+
