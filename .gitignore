@@ -5,3 +5,10 @@ backend/volleyball_master_stats.csv
 BroadSteps.md
 backend/reset_db.py
 backend/verify_ingestion.py
+
+# Terraform local state and variable files
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
