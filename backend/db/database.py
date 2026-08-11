@@ -5,14 +5,22 @@ from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
+# 1. Check if Docker Compose passed a full DATABASE_URL
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    DB_CONN_STRING = DATABASE_URL
+    connect_args = {}
+else:
+    # 2. Fallback to building string from individual variables
+    ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
 
 if ENVIRONMENT == "local":
-    user = os.getenv("LOCAL_DB_USER")
-    pwd = os.getenv("LOCAL_DB_PASSWORD")
-    host = os.getenv("LOCAL_DB_HOST")
-    port = os.getenv("LOCAL_DB_PORT", "5432")
-    name = os.getenv("LOCAL_DB_NAME")
+    user = os.getenv("POSTGRES_USER")
+    pwd = os.getenv("POSTGRES_PASSWORD")
+    host = os.getenv("POSTGRES_HOST", "db")
+    port = os.getenv("POSTGRES_PORT", "5432")
+    name = os.getenv("POSTGRES_DB")
 else:
     user = os.getenv("NEON_DB_USER")
     pwd = os.getenv("NEON_DB_PASSWORD")
@@ -20,6 +28,8 @@ else:
     port = os.getenv("NEON_DB_PORT", "5432")
     name = os.getenv("NEON_DB_NAME")
 
+
+print(f"--- DB DEBUG: host={host}, port={port}, user={user}, db={name} ---")
 # Build the connection string cleanly for standard platforms
 DB_CONN_STRING = f"postgresql+asyncpg://{user}:{pwd}@{host}:{port}/{name}"
 
