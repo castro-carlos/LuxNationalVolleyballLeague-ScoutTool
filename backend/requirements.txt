@@ -7,3 +7,5 @@ pydantic
 beautifulsoup4
 requests
 pymupdf
+alembic
+psycopg2-binary
