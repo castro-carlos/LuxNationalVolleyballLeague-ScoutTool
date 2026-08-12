@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  backend:
+    # Mount backend folder for instant Python reload
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: volleyball_frontend_dev
+    ports:
+      - "3000:3000"
+    # Mount frontend folder for Hot Module Replacement (HMR)
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Polling fix for Windows file changes

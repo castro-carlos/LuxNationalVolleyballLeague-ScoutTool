@@ -3,7 +3,7 @@
 // Uses environment variable if present, otherwise defaults to relative /api for local Docker Nginx proxy,
 // or directly to Render as a fallback.
 const BASE_URL = import.meta.env?.VITE_API_URL
-  || process.env.REACT_APP_API_URL 
+  || process.env.REACT_APP_API_URL
   || "/api";
 
 export const fetchTeams = async () => {
