@@ -1,5 +1,6 @@
 import asyncio
 import logging
+
 from db.database import engine
 from db.models import Base
 
@@ -21,7 +22,7 @@ async def initialize_database():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logging.info("Database tables initialized successfully via SQLAlchemy!")
-    except Exception as e:
+    except Exception:
         logging.critical("FAILED to initialize database tables.", exc_info=True)
 
 if __name__ == "__main__":

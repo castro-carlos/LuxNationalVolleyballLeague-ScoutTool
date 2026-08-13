@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from repositories.players import PlayerRepository
 
+
 class PlayerService:
     def __init__(self, repo: PlayerRepository):
         self.repo = repo

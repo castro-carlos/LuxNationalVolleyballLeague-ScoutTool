@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from db.database import get_db
+from fastapi import APIRouter, Depends, Query
 from repositories.players import PlayerRepository
 from services.players import PlayerService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/players", tags=["Player Analytics"])
 

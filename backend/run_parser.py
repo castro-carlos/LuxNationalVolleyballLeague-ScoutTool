@@ -1,15 +1,13 @@
 import asyncio
 import glob
-import os
 import logging
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession  # Use AsyncSession
+import os
 
 from db.database import engine
-
-from db.models import Team, Match, PlayerMatchStat
-
+from db.models import Match, PlayerMatchStat, Team
 from pdf_parser.report_parser import DataVolleyParser
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession  # Use AsyncSession
 
 # --- LOGGING CONFIGURATION ---
 logging.basicConfig(
@@ -123,7 +121,7 @@ async def main():
                 await session.commit()
                 logging.info(f"Successfully ingested match metadata and {len(report.players)} player records from {file_name}.")
 
-            except Exception as e:
+            except Exception:
                 await session.rollback()
                 logging.error(f"CRASH OCCURRED while processing {file_name}. Rolling back transaction.", exc_info=True)
 

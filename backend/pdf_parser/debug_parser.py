@@ -1,6 +1,6 @@
-from pathlib import Path
 import os
 import sys
+from pathlib import Path
 
 # 1. Dynamically find the project root directory
 # __file__ is the current script. .resolve().parents[1] moves up two levels to the root
@@ -22,7 +22,7 @@ if not PDF_PATH.exists():
 parser = DataVolleyParser(str(PDF_PATH))
 
 print("=" * 80)
-print(f"DEBUGGING SCRIPT: WORD-BY-WORD COORDINATE MAP FOR WEBER STEVE")
+print("DEBUGGING SCRIPT: WORD-BY-WORD COORDINATE MAP FOR WEBER STEVE")
 print("=" * 80)
 
 # Loop through all the reconstructed rows to find Steve Weber's data lines

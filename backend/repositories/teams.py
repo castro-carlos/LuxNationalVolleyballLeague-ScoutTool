@@ -1,6 +1,7 @@
+from db.models import Match, PlayerMatchStat, Team
+from sqlalchemy import Float, case, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, case, Float
-from db.models import Team, Match, PlayerMatchStat
+
 
 class TeamRepository:
     def __init__(self, db: AsyncSession):

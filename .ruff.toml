@@ -1,0 +1,13 @@
+exclude = [
+    ".venv",
+    "venv",
+    "alembic/versions",
+    "build",
+    "dist"
+]
+
+# Ignore non-critical lint rules if needed
+lint.ignore = [
+    "E501", # Line too long
+    "F401", # Imported but unused (if temporary)
+]

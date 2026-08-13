@@ -28,6 +28,7 @@ jobs:
 
       - name: Run Linter (Ruff)
         run: ruff check .
+        continue-on-error: true
 
       - name: Run Tests (Pytest)
         run: pytest

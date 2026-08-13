@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from db.database import get_db
-from schemas.teams import TeamResponse
-from schemas.players import PlayerAttackVolumeReport, PlayerServiceVolumeReport
-from schemas.players import PlayerReceptionErrorReport
+from fastapi import APIRouter, Depends, Query
 from repositories.teams import TeamRepository
+from schemas.players import (
+    PlayerAttackVolumeReport,
+    PlayerReceptionErrorReport,
+    PlayerServiceVolumeReport,
+)
+from schemas.teams import TeamResponse
 from services.teams import TeamService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(
     prefix="/teams",
@@ -19,11 +22,11 @@ def get_team_service(db: AsyncSession = Depends(get_db)) -> TeamService:
     repo = TeamRepository(db)
     return TeamService(repo)
 
-@router.get("", response_model=List[TeamResponse], tags=["Teams Management"])
+@router.get("", response_model=list[TeamResponse], tags=["Teams Management"])
 async def get_all_teams(service: TeamService = Depends(get_team_service)):
     return await service.list_teams()
 
-@router.get("/{team_id}/reception-scout", response_model=List[PlayerReceptionErrorReport], tags=["Scouting & Analytics"])
+@router.get("/{team_id}/reception-scout", response_model=list[PlayerReceptionErrorReport], tags=["Scouting & Analytics"])
 async def get_team_reception_error_scout_report(
         team_id: int,
         season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),
@@ -32,7 +35,7 @@ async def get_team_reception_error_scout_report(
 ):
     return await service.get_reception_scout_report(team_id, season, min_receptions)
 
-@router.get("/{team_id}/attack-scout", response_model=List[PlayerAttackVolumeReport], tags=["Scouting & Analytics"])
+@router.get("/{team_id}/attack-scout", response_model=list[PlayerAttackVolumeReport], tags=["Scouting & Analytics"])
 async def get_team_attack_volume_scout_report(
         team_id: int,
         season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),
@@ -41,7 +44,7 @@ async def get_team_attack_volume_scout_report(
 ):
     return await service.get_attack_volume_report(team_id, season, min_attacks)
 
-@router.get("/{team_id}/service-scout", response_model=List[PlayerServiceVolumeReport], tags=["Scouting & Analytics"])
+@router.get("/{team_id}/service-scout", response_model=list[PlayerServiceVolumeReport], tags=["Scouting & Analytics"])
 async def get_team_service_volume_scout_report(
         team_id: int,
         season: str = Query("2025/2026", description="Season format: YYYY/YYYY"),

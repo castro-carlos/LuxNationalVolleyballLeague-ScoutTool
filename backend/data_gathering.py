@@ -1,9 +1,10 @@
-from bs4 import BeautifulSoup
-import requests
+import os
 import re
 import time
-from urllib.parse import urljoin, urlparse, parse_qs
-import os
+from urllib.parse import parse_qs, urljoin, urlparse
+
+import requests
+from bs4 import BeautifulSoup
 
 results_page = requests.get("https://flvb.lu/indoor/results/championship/men/division-nationale?saison134=5abf1462-614b-44ee-bb92-751f50becae8")
 soup = BeautifulSoup(results_page.content, 'html.parser')

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import List
 
+
 @dataclass
 class PlayerMatchStats:
     # Identifiers
@@ -39,4 +40,4 @@ class MatchReport:
     season: str
     home_team: str
     away_team: str
-    players: List[PlayerMatchStats]
+    players: list[PlayerMatchStats]

@@ -1,9 +1,11 @@
+from contextlib import asynccontextmanager
+
+from api.players import router as players_router
+from api.teams import router as teams_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.teams import router as teams_router
-from api.players import router as players_router
 from setup_db import initialize_database
-from contextlib import asynccontextmanager
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

@@ -1,14 +1,15 @@
 import re
-import pymupdf
 from collections import defaultdict
 from datetime import datetime
-from pdf_parser.extractors.point import PointsExtractor
+from typing import List
+
+import pymupdf
+from pdf_parser.dtos import MatchReport, PlayerMatchStats
+from pdf_parser.extractors.attack import AttackExtractor
 from pdf_parser.extractors.block import BlockExtractor
+from pdf_parser.extractors.point import PointsExtractor
 from pdf_parser.extractors.reception import ReceptionExtractor
 from pdf_parser.extractors.service import ServiceExtractor
-from pdf_parser.extractors.attack import AttackExtractor
-from pdf_parser.dtos import MatchReport, PlayerMatchStats
-from typing import List
 
 
 class CoordinatedString(str):
@@ -128,7 +129,7 @@ class DataVolleyParser:
             return False
         return tokens[1] == 'L'
 
-    def parse_players(self, team) -> List[PlayerMatchStats]:
+    def parse_players(self, team) -> list[PlayerMatchStats]:
         player_objects = []
 
         inside_players = False
